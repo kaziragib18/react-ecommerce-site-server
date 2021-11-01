@@ -58,8 +58,14 @@ async function run() {
             });
 
             //Add Orders API
+            app.get('/orders', async(req,res)=>{
+                  const cursor = orderCollection.find({});
+                  const orders = await cursor.toArray();
+                  res.json(orders);
+            })
             app.post('/orders', async (req, res) => {
                   const order = req.body;
+                  order.createAt = new Date();
                   // console.log('order', order);
                   const result = await orderCollection.insertOne(order);
                   res.json(result);
@@ -81,3 +87,26 @@ app.get('/', (req, res) => {
 app.listen(port, () => {
       console.log('Server running at port', port);
 });
+
+/*
+one time:
+1. nodemon globally install
+2. mongodb atlas user, access
+3. Network access (ip address allow)
+Every projects:
+1. install mongodb, express, cors, dotenv
+2. import (require), mongodb
+3. copy uri (connection string)
+4. create the client (copy code from atlas)
+5. Create or get database access credentials (username, password)
+6. create .env file and add DB_USER and DB_PASS as environment variable
+7. Make sure you require (import) dotenv
+8. Convert URI string to a template string.
+9. Add DB_USER and DB_PASS in the connection URI string.
+10. Check URI string by using console.log
+11. Create async function run and call it by using run().catch(console.dir)
+12. add try and finally inside the run function.
+13. comment out await client.close() to keep the connection alive
+14. add await client.connect(); inside the try block
+15. use a console.log after the client.connect to ensure database is connected
+*/
