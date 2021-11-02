@@ -2,9 +2,19 @@ const express = require('express');
 const { MongoClient } = require('mongodb');
 require('dotenv').config('cors');
 const cors = require('cors');
+var admin = require("firebase-admin");
+
 
 const app = express();
 const port = process.env.PORT || 5000;
+
+//firebase admin initialization
+var serviceAccount = require('./panda-shop-2021-firebase-adminsdk-lvyti-ad49694e34.json');
+
+admin.initializeApp({
+      credential: admin.credential.cert(serviceAccount)
+});
+
 
 //middleware
 app.use(cors());
@@ -12,6 +22,23 @@ app.use(express.json());
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.txagv.mongodb.net/myFirstDatabase?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
+
+//verify and decode jwt token with firebase admin
+async function verifyToken(req, res, next) {
+      if (req.headers.authorization?.startsWith('Bearer ')) {
+            const idToken = req.headers.authorization.split('Bearer ')[1];
+            try {
+                  const decodedUser = await admin.auth().verifyIdToken(idToken);
+                  // console.log('email', decodedUser.email);
+                  req.decodedUserEmail = decodedUser.email;
+            }
+            catch {
+
+            }
+            // console.log('inside separate function',idToken);
+      }
+      next();
+}
 
 // console.log(uri);
 
@@ -58,11 +85,20 @@ async function run() {
             });
 
             //Add Orders API
-            app.get('/orders', async(req,res)=>{
-                  const cursor = orderCollection.find({});
-                  const orders = await cursor.toArray();
-                  res.json(orders);
-            })
+            app.get('/orders', verifyToken, async (req, res) => {
+                  const email = req.query.email;
+                  if (req.decodedUserEmail === email) {
+                        const query = { email: email }
+                        const cursor = orderCollection.find(query);
+                        const orders = await cursor.toArray();
+                        res.json(orders);
+                  }
+                  else{
+                        res.status(401).json({message: 'User not authorized'})
+                  }
+
+            });
+
             app.post('/orders', async (req, res) => {
                   const order = req.body;
                   order.createAt = new Date();
