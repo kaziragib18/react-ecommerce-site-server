@@ -9,7 +9,7 @@ const app = express();
 const port = process.env.PORT || 5000;
 
 //firebase admin initialization
-var serviceAccount = require('');
+var serviceAccount = require('./panda-shop-2021-firebase-adminsdk-lvyti-ad49694e34.json');
 
 admin.initializeApp({
       credential: admin.credential.cert(serviceAccount)
@@ -94,7 +94,7 @@ async function run() {
                         res.json(orders);
                   }
                   else{
-                        res.status(401).json({message: 'User not authoriz'})
+                        res.status(401).json({message: 'User not authorized'})
                   }
 
             });
